@@ -139,7 +139,19 @@ async function runPingTest() {
         
         if (!response.ok) throw new Error(`HTTP error ${response.status} ${response.statusText}`);
         
-        const duration = performance.now() - start;
+        let duration = performance.now() - start;
+        if (serverConfig.pingURL.includes('cloudflare.com')) {
+          const serverTiming = response.headers.get('Server-Timing');
+          if (serverTiming) {
+            const match = /rtt=(\d+)/.exec(serverTiming);
+            if (match) {
+              const rttMs = parseInt(match[1]) / 1000;
+              if (rttMs > 0 && rttMs < 1000) {
+                duration = rttMs;
+              }
+            }
+          }
+        }
         pings.push(duration);
         console.log(`Worker ping iteration ${i+1} success: ${duration.toFixed(2)}ms`);
         

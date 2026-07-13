@@ -660,8 +660,8 @@ function handleTestComplete(results) {
   const consistency = Math.max(20, Math.min(100, 100 - (results.jitter * 1.2)));
   extraJitter.textContent = `Consistency: ${consistency.toFixed(0)}%`;
   
-  digitalSpeed.textContent = formatNumber(convertSpeed(results.download, unit));
-  digitalUnit.textContent = unit;
+  digitalSpeed.textContent = '';
+  digitalUnit.textContent = '';
   digitalLabel.textContent = 'FINISHED';
   
   const testRun = {
@@ -758,16 +758,18 @@ function formatNumber(num) {
 
 function updateUnitsInUI() {
   const unit = getSelectedUnit();
-  digitalUnit.textContent = unit;
   
   if (currentPhase === 'complete' && testHistory.length > 0) {
     const lastResult = testHistory[0];
-    digitalSpeed.textContent = formatNumber(convertSpeed(lastResult.download, unit));
+    digitalSpeed.textContent = '';
+    digitalUnit.textContent = '';
     valDownload.textContent = formatNumber(convertSpeed(lastResult.download, unit));
     valUpload.textContent = formatNumber(convertSpeed(lastResult.upload, unit));
     
     extraDownload.textContent = `Peak: ${formatNumber(convertSpeed(peakSpeed, unit))} ${unit}`;
     extraUpload.textContent = `Peak: ${formatNumber(convertSpeed(peakSpeed, unit))} ${unit}`;
+  } else {
+    digitalUnit.textContent = unit;
   }
   
   renderHistoryTable();
