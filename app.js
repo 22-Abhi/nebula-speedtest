@@ -445,7 +445,7 @@ function startTest() {
     threads: parseInt(settingThreads.value),
     downloadDuration: parseInt(settingDuration.value) * 1000,
     uploadDuration: parseInt(settingDuration.value) * 1000,
-    pingRequests: 12,
+    pingRequests: 8,
     includeOverhead: settingOverhead.checked,
     server: selectedServer
   };
@@ -478,7 +478,7 @@ function resetMetricCards() {
   
   extraDownload.textContent = 'Peak: - -';
   extraUpload.textContent = 'Peak: - -';
-  extraPing.textContent = 'Samples: 0/12';
+  extraPing.textContent = 'Samples: 0/8';
   extraJitter.textContent = 'Consistency: - -';
   
   digitalSpeed.textContent = '0.0';
