@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nebula Speedtest | Highly Accurate & Optimized Internet Speed Test</title>
+  <meta name="description" content="Test your internet speed with 100% precision. Nebula Speedtest measures download speed, upload speed, latency, and jitter using background Web Workers and Cloudflare's global edge infrastructure.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-background-glow"></div>
+  
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+        <span class="logo-text">NEBULA<span class="logo-accent">SPEED</span></span>
+      </div>
+      
+      <div class="network-info-badge" id="network-badge">
+        <div class="connection-status-dot" id="status-dot"></div>
+        <span class="connection-status-text" id="status-text">Detecting Server...</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <!-- Top Row: Speedometer Gauge + Metrics Grid -->
+      <div class="dashboard-top-row">
+        <!-- Speedometer Section -->
+        <div class="panel speedometer-panel">
+          <div class="speedometer-container">
+            <canvas id="speedometer-canvas" width="360" height="360"></canvas>
+            <div class="digital-display">
+              <span class="speed-value" id="digital-speed">0.0</span>
+              <span class="speed-unit" id="digital-unit">Mbps</span>
+              <span class="test-label" id="digital-label">READY</span>
+            </div>
+          </div>
+          <div class="control-actions">
+            <button class="btn btn-primary btn-lg" id="btn-start-test">
+              <span class="btn-text">START TEST</span>
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </button>
+            <button class="btn btn-secondary btn-lg hidden" id="btn-cancel-test">
+              <span class="btn-text">CANCEL</span>
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metrics Cards Section -->
+        <div class="metrics-grid">
+          <!-- Download Card -->
+          <div class="metric-card card-download" id="card-download">
+            <div class="card-header">
+              <div class="card-icon-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+              <span class="card-title">DOWNLOAD</span>
+            </div>
+            <div class="card-body">
+              <div class="card-value-group">
+                <span class="card-value" id="val-download">- -</span>
+                <span class="card-unit" id="unit-download">Mbps</span>
+              </div>
+              <div class="card-extra" id="extra-download">Peak: - -</div>
+            </div>
+            <div class="card-progress-bar">
+              <div class="progress-fill" id="fill-download"></div>
+            </div>
+          </div>
+
+          <!-- Upload Card -->
+          <div class="metric-card card-upload" id="card-upload">
+            <div class="card-header">
+              <div class="card-icon-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <span class="card-title">UPLOAD</span>
+            </div>
+            <div class="card-body">
+              <div class="card-value-group">
+                <span class="card-value" id="val-upload">- -</span>
+                <span class="card-unit" id="unit-upload">Mbps</span>
+              </div>
+              <div class="card-extra" id="extra-upload">Peak: - -</div>
+            </div>
+            <div class="card-progress-bar">
+              <div class="progress-fill" id="fill-upload"></div>
+            </div>
+          </div>
+
+          <!-- Ping Card -->
+          <div class="metric-card card-ping" id="card-ping">
+            <div class="card-header">
+              <div class="card-icon-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="6"></circle>
+                  <circle cx="12" cy="12" r="2"></circle>
+                </svg>
+              </div>
+              <span class="card-title">PING (LATENCY)</span>
+            </div>
+            <div class="card-body">
+              <div class="card-value-group">
+                <span class="card-value" id="val-ping">- -</span>
+                <span class="card-unit">ms</span>
+              </div>
+              <div class="card-extra" id="extra-ping">Samples: 0/12</div>
+            </div>
+            <div class="card-progress-bar">
+              <div class="progress-fill" id="fill-ping"></div>
+            </div>
+          </div>
+
+          <!-- Jitter Card -->
+          <div class="metric-card card-jitter" id="card-jitter">
+            <div class="card-header">
+              <div class="card-icon-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                </svg>
+              </div>
+              <span class="card-title">JITTER</span>
+            </div>
+            <div class="card-body">
+              <div class="card-value-group">
+                <span class="card-value" id="val-jitter">- -</span>
+                <span class="card-unit">ms</span>
+              </div>
+              <div class="card-extra" id="extra-jitter">Consistency: - -</div>
+            </div>
+            <div class="card-progress-bar">
+              <div class="progress-fill" id="fill-jitter"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Network Details Banner -->
+      <div class="panel network-details-panel">
+        <div class="detail-item">
+          <div class="detail-label">CLIENT IP</div>
+          <div class="detail-value" id="net-ip">Fetching...</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">ISP / PROVIDER</div>
+          <div class="detail-value" id="net-isp">Fetching...</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">SERVER LOCATION</div>
+          <div class="detail-value" id="net-location">Fetching...</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">DATACENTER (EDGE)</div>
+          <div class="detail-value" id="net-colo">Fetching...</div>
+        </div>
+      </div>
+
+      <!-- Real-Time Speed Chart Panel -->
+      <div class="panel graph-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Real-Time Performance Chart</h2>
+          <span class="panel-subtitle">Visualizing speed fluctuations in Megabits per second</span>
+        </div>
+        <div class="panel-body canvas-container">
+          <canvas id="speed-graph-canvas" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Advanced Settings & Testing History -->
+      <div class="dashboard-bottom-row">
+        <!-- Settings Panel -->
+        <div class="panel settings-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Advanced Settings</h2>
+          </div>
+          <div class="settings-grid">
+            <div class="setting-item">
+              <div class="setting-info">
+                <label for="setting-threads" class="setting-label">Parallel Streams</label>
+                <span class="setting-value-preview" id="preview-threads">4</span>
+              </div>
+              <input type="range" id="setting-threads" min="1" max="8" value="4" class="slider">
+              <span class="setting-desc">Multiple connections help saturate high-bandwidth connections.</span>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <label for="setting-duration" class="setting-label">Test Duration (s)</label>
+                <span class="setting-value-preview" id="preview-duration">8s</span>
+              </div>
+              <input type="range" id="setting-duration" min="5" max="15" value="8" class="slider">
+              <span class="setting-desc">Longer duration ensures connection stability and averages out peaks.</span>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-info">
+                <label for="setting-unit" class="setting-label">Speed Unit</label>
+              </div>
+              <select id="setting-unit" class="dropdown">
+                <option value="Mbps" selected>Mbps (Megabits/sec)</option>
+                <option value="MBs">MB/s (Megabytes/sec)</option>
+                <option value="Kbps">Kbps (Kilobits/sec)</option>
+              </select>
+              <span class="setting-desc">Choose how throughput results are displayed.</span>
+            </div>
+
+            <div class="setting-item">
+              <div class="toggle-container">
+                <div class="setting-info">
+                  <label for="setting-overhead" class="setting-label">Include TCP/IP Protocol Overhead</label>
+                  <span class="setting-desc">Compensates ~4.5% for Ethernet, IP, and TCP headers to approximate raw link speed.</span>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="setting-overhead">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="panel history-panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Test Log & History</h2>
+            <div class="panel-actions">
+              <button class="btn btn-secondary btn-sm" id="btn-export-csv">
+                <span>Export CSV</span>
+              </button>
+              <button class="btn btn-danger btn-sm" id="btn-clear-history">
+                <span>Clear</span>
+              </button>
+            </div>
+          </div>
+          <div class="history-table-container">
+            <table class="history-table" id="history-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>ISP / Server</th>
+                  <th>Ping</th>
+                  <th>Jitter</th>
+                  <th>Download</th>
+                  <th>Upload</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="history-body">
+                <!-- Populated dynamically via JS -->
+                <tr class="empty-history-row">
+                  <td colspan="7">No speed tests run yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Nebula Speedtest &copy; 2026. Built for 100% precision testing over global CDN edge relays.</p>
+      <div class="footer-links">
+        <a href="#" id="link-share-results" class="hidden">Share Last Result</a>
+        <span class="footer-divider hidden">|</span>
+        <span>Version 1.0.0 (Optimized)</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Notification Toast -->
+  <div class="toast" id="app-toast">
+    <div class="toast-content" id="toast-message">Message text goes here</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
