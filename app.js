@@ -395,8 +395,8 @@ function startTest() {
     worker.terminate();
   }
   
-  console.log("Creating new Worker('speed-worker.js')...");
-  worker = new Worker('speed-worker.js');
+  console.log("Creating new Worker('speed-worker.js?v=' + Date.now())...");
+  worker = new Worker('speed-worker.js?v=' + Date.now());
   
   // Handle messages from Worker
   worker.onmessage = function (e) {
