@@ -247,47 +247,73 @@ function resizeGraphCanvas() {
 // ----------------------------------------------------
 async function fetchNetworkDetails() {
   console.log("Fetching network details...");
-  // Try GeoIP lookup via ipwho.is (includes ISP, geolocation)
+  let cfSuccess = false;
+  
+  // Try Cloudflare meta endpoint first (most accurate for Anycast + ISP + local edge)
   try {
-    const res = await fetch(getTargetUrl('https://ipwho.is/'));
-    if (!res.ok) throw new Error('ipwho.is failed');
+    const res = await fetch(getTargetUrl('https://speed.cloudflare.com/meta'));
+    if (!res.ok) throw new Error('Cloudflare meta failed');
     const data = await res.json();
     
-    if (data.success) {
-      netInfo.ip = data.ip || 'Unknown';
-      netInfo.isp = data.connection?.isp || data.isp || 'Unknown';
-      netInfo.location = `${data.city || ''}, ${data.country || 'Unknown'}`;
-      console.log("GeoIP details fetched successfully:", netInfo);
+    netInfo.ip = data.clientIp || 'Unknown';
+    netInfo.isp = data.asOrganization || 'Unknown';
+    netInfo.location = `${data.city || ''}, ${data.country || 'Unknown'}`;
+    if (data.colo) {
+      netInfo.colo = `Cloudflare Anycast - ${data.colo.city || 'Edge'}, ${data.colo.cca2 || 'IN'} (${data.colo.iata || ''})`;
+      // Update the default server's name if it's Cloudflare
+      if (selectedServer && selectedServer.pingURL.includes('cloudflare.com')) {
+        selectedServer.name = netInfo.colo;
+      }
     }
+    cfSuccess = true;
+    console.log("Cloudflare network details fetched successfully:", netInfo);
   } catch (err) {
-    console.warn('Primary GeoIP lookup failed, using Cloudflare fallback:', err);
-    netInfo.isp = 'Cloudflare Edge Fallback';
+    console.warn("Cloudflare meta fetch failed, falling back:", err);
   }
 
-  // Query Cloudflare trace for IP and Location fallback
-  try {
-    const res = await fetch(getTargetUrl('https://speed.cloudflare.com/cdn-cgi/trace'));
-    if (res.ok) {
-      const text = await res.text();
-      const lines = text.split('\n');
-      const traceData = {};
-      lines.forEach(line => {
-        const parts = line.split('=');
-        if (parts.length === 2) {
-          traceData[parts[0].trim()] = parts[1].trim();
-        }
-      });
+  if (!cfSuccess) {
+    // Try GeoIP lookup via ipwho.is (includes ISP, geolocation)
+    try {
+      const res = await fetch(getTargetUrl('https://ipwho.is/'));
+      if (!res.ok) throw new Error('ipwho.is failed');
+      const data = await res.json();
       
-      if (traceData.ip && netInfo.ip === 'Fetching...') {
-        netInfo.ip = traceData.ip;
+      if (data.success) {
+        netInfo.ip = data.ip || 'Unknown';
+        netInfo.isp = data.connection?.isp || data.isp || 'Unknown';
+        netInfo.location = `${data.city || ''}, ${data.country || 'Unknown'}`;
+        console.log("GeoIP details fetched successfully:", netInfo);
       }
-      if (traceData.loc && netInfo.location === 'Fetching...') {
-        netInfo.location = traceData.loc; // Country code
-      }
-      console.log("Cloudflare trace fetched successfully:", traceData);
+    } catch (err) {
+      console.warn('Primary GeoIP lookup failed, using Cloudflare fallback:', err);
+      netInfo.isp = 'Cloudflare Edge Fallback';
     }
-  } catch (err) {
-    console.error('Cloudflare trace fallback failed:', err);
+
+    // Query Cloudflare trace for IP and Location fallback
+    try {
+      const res = await fetch(getTargetUrl('https://speed.cloudflare.com/cdn-cgi/trace'));
+      if (res.ok) {
+        const text = await res.text();
+        const lines = text.split('\n');
+        const traceData = {};
+        lines.forEach(line => {
+          const parts = line.split('=');
+          if (parts.length === 2) {
+            traceData[parts[0].trim()] = parts[1].trim();
+          }
+        });
+        
+        if (traceData.ip && netInfo.ip === 'Fetching...') {
+          netInfo.ip = traceData.ip;
+        }
+        if (traceData.loc && netInfo.location === 'Fetching...') {
+          netInfo.location = traceData.loc; // Country code
+        }
+        console.log("Cloudflare trace fetched successfully:", traceData);
+      }
+    } catch (err) {
+      console.error('Cloudflare trace fallback failed:', err);
+    }
   }
   
   // Render details to UI
@@ -333,6 +359,8 @@ async function autoSelectServer() {
           const country = res.headers.get('cf-meta-country');
           if (colo) {
             name = `Cloudflare Anycast - ${city || 'Local Edge'}, ${country || ''} (${colo})`;
+          } else if (netInfo.colo && netInfo.colo !== 'Selecting...') {
+            name = netInfo.colo;
           }
         }
         return { ...srv, rtt, name };
