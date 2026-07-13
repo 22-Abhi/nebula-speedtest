@@ -131,11 +131,7 @@ async function runPingTest() {
         console.log(`Worker ping iteration ${i+1}: fetching ${target}`);
         
         const response = await fetch(target, {
-          cache: 'no-store',
-          headers: {
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache'
-          }
+          cache: 'no-store'
         });
         
         if (!response.ok) throw new Error(`HTTP error ${response.status} ${response.statusText}`);
@@ -250,11 +246,7 @@ async function downloadStream(endTime, threadIndex) {
       }
       
       const response = await fetch(url, {
-        cache: 'no-store',
-        headers: {
-          'Pragma': 'no-cache',
-          'Cache-Control': 'no-cache'
-        }
+        cache: 'no-store'
       });
       
       if (!response.ok) throw new Error('HTTP error');
