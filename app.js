@@ -5,6 +5,13 @@
 // Removed dead Bangalore and Singapore servers. Tokyo is now the default first server.
 const SERVERS = [
   {
+    name: "Cloudflare Anycast (Closest Edge)",
+    pingURL: "https://speed.cloudflare.com/__down",
+    dlURL: "https://speed.cloudflare.com/__down",
+    ulURL: "https://speed.cloudflare.com/__up",
+    location: "Global"
+  },
+  {
     name: "Mumbai, India (Akamai Linode)",
     pingURL: "http://speedtest.mumbai1.linode.com/empty.php",
     dlURL: "http://speedtest.mumbai1.linode.com/garbage.php",
@@ -301,7 +308,13 @@ async function autoSelectServer() {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 1200); // 1.2s timeout
       
-      const target = getTargetUrl(`${srv.pingURL}?r=${Math.random()}`);
+      let target;
+      if (srv.pingURL.includes('cloudflare.com')) {
+        target = getTargetUrl(`${srv.pingURL}?r=${Math.random()}&bytes=0`);
+      } else {
+        target = getTargetUrl(`${srv.pingURL}?r=${Math.random()}`);
+      }
+      
       const res = await fetch(target, {
         method: 'GET',
         signal: controller.signal,
@@ -312,7 +325,17 @@ async function autoSelectServer() {
       if (res.ok) {
         const rtt = performance.now() - start;
         console.log(`Ping sweep success for ${srv.name}: RTT = ${rtt.toFixed(1)}ms`);
-        return { ...srv, rtt };
+        
+        let name = srv.name;
+        if (srv.pingURL.includes('cloudflare.com')) {
+          const colo = res.headers.get('cf-meta-colo');
+          const city = res.headers.get('cf-meta-city');
+          const country = res.headers.get('cf-meta-country');
+          if (colo) {
+            name = `Cloudflare Anycast - ${city || 'Local Edge'}, ${country || ''} (${colo})`;
+          }
+        }
+        return { ...srv, rtt, name };
       }
     } catch (e) {
       console.warn(`Ping sweep timed out or failed for ${srv.name}`);

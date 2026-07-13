@@ -13,7 +13,7 @@ let downloadSamples = [];
 let uploadSamples = [];
 
 // Configuration variables
-let pingRequests = 12;
+let pingRequests = 8;
 let downloadDuration = 8000; // ms
 let uploadDuration = 8000; // ms
 let threadCount = 4;
@@ -127,7 +127,10 @@ async function runPingTest() {
       try {
         const start = performance.now();
         // Fetch empty file with cache-busting to measure connection overhead
-        const target = getTargetUrl(`${serverConfig.pingURL}?r=${Math.random()}`);
+        let target = getTargetUrl(`${serverConfig.pingURL}?r=${Math.random()}`);
+        if (serverConfig.pingURL.includes('cloudflare.com')) {
+          target = getTargetUrl(`${serverConfig.pingURL}?r=${Math.random()}&bytes=0`);
+        }
         console.log(`Worker ping iteration ${i+1}: fetching ${target}`);
         
         const response = await fetch(target, {
@@ -158,7 +161,7 @@ async function runPingTest() {
     }
     
     // Small delay between pings to avoid flooding
-    await new Promise(r => setTimeout(r, 80));
+    await new Promise(r => setTimeout(r, 300));
   }
   
   // Statistical cleaning: Discard the first 2 pings (warmup / DNS / handshake)
@@ -240,7 +243,11 @@ async function downloadStream(endTime, threadIndex) {
     try {
       let url;
       if (!useFallback && serverConfig && serverConfig.dlURL) {
-        url = getTargetUrl(`${serverConfig.dlURL}?r=${Math.random()}&ckSize=100`);
+        if (serverConfig.dlURL.includes('cloudflare.com')) {
+          url = getTargetUrl(`${serverConfig.dlURL}?r=${Math.random()}&bytes=50000000`);
+        } else {
+          url = getTargetUrl(`${serverConfig.dlURL}?r=${Math.random()}&ckSize=100`);
+        }
       } else {
         url = getTargetUrl(`${DOWNLOAD_FILES[fileIndex]}?r=${Math.random()}`);
       }
