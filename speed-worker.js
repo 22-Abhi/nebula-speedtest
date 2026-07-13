@@ -151,7 +151,7 @@ async function runPingTest() {
         console.error(`Worker ping iteration ${i+1} failed:`, e);
         errorCount++;
         if (errorCount >= 3) {
-          throw new Error(`Ping test failed. The target server is unreachable or CORS blocked. Error: ${e.message}`);
+          throw new Error(`Ping test failed. The target server "${serverConfig.name}" (${serverConfig.pingURL}) is unreachable or CORS blocked. Error: ${e.message}`);
         }
         await new Promise(r => setTimeout(r, 200)); // sleep before retry
       }
